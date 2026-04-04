@@ -26,15 +26,16 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.koin.core)
-
-            // Firebase KMP
-            implementation(libs.firebase.auth)
-            implementation(libs.firebase.firestore)
-            implementation(libs.firebase.storage)
+            implementation(libs.kotlinx.datetime)
         }
 
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+
+            // Firebase KMP (Android only - suporta Android nativamente)
+            implementation(libs.firebase.auth)
+            implementation(libs.firebase.firestore)
+            implementation(libs.firebase.storage)
         }
 
         val wasmJsMain by getting {

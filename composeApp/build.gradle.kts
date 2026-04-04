@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.googleServices) apply false
+}
+
+// Aplica google-services apenas se o arquivo existir
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 kotlin {
@@ -49,12 +55,16 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
 
+            // DateTime
+            implementation(libs.kotlinx.datetime)
+
             // Lifecycle
             implementation(libs.lifecycle.viewmodel.compose)
         }
 
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.activity.compose)
         }
 
         val wasmJsMain by getting {

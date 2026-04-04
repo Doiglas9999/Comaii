@@ -21,6 +21,26 @@
 </head>
 <body>
     <canvas id="ComposeTarget"></canvas>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-storage-compat.js"></script>
+
+    <script>
+        // COLE AQUI SUA CONFIG DO FIREBASE WEB
+        const firebaseConfig = {
+            apiKey: "COLE_AQUI",
+            authDomain: "COLE_AQUI",
+            projectId: "COLE_AQUI",
+            storageBucket: "COLE_AQUI",
+            messagingSenderId: "COLE_AQUI",
+            appId: "COLE_AQUI"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
     <script src="comaii.js"></script>
 </body>
 </html>

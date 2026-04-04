@@ -1,22 +1,15 @@
 package com.comaii.shared.di
 
-import com.comaii.shared.data.repository.CompanyRepository
-import com.comaii.shared.data.repository.OrderRepository
-import com.comaii.shared.data.repository.ProductRepository
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.auth.auth
-import dev.gitlive.firebase.firestore.firestore
-import dev.gitlive.firebase.storage.storage
+import com.comaii.shared.data.firebase.FirebaseService
+import org.koin.core.module.Module
 import org.koin.dsl.module
 
-val sharedModule = module {
-    // Firebase
-    single { Firebase.firestore }
-    single { Firebase.auth }
-    single { Firebase.storage }
+/**
+ * Módulo Koin esperado por cada plataforma.
+ * Cada plataforma fornece a implementação de FirebaseService.
+ */
+expect fun platformModule(): Module
 
-    // Repositories
-    single { CompanyRepository(get()) }
-    single { ProductRepository(get()) }
-    single { OrderRepository(get()) }
+val sharedModule = module {
+    // O FirebaseService é fornecido pelo platformModule()
 }
