@@ -3,6 +3,7 @@ package com.comaii.app.ui.screens.auth
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -118,6 +120,23 @@ class AuthScreen : Screen {
                     imeAction = ImeAction.Done,
                 ),
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Lembrar credenciais
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(
+                    checked = state.rememberCredentials,
+                    onCheckedChange = screenModel::onRememberChange,
+                )
+                Text(
+                    text = "Lembrar e-mail e senha",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
 
             // Erro
             if (state.error != null) {

@@ -31,6 +31,7 @@ import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.comaii.app.ui.screens.admin.products.ProductsScreen
+import com.comaii.app.ui.screens.admin.settings.StoreSettingsScreen
 import com.comaii.app.ui.screens.auth.AuthScreen
 import com.comaii.app.ui.screens.auth.AuthScreenModel
 import org.koin.core.parameter.parametersOf
@@ -125,7 +126,7 @@ data class AdminDashboardScreen(val companyId: String) : Screen {
                         title = "Configurar Loja",
                         count = "",
                         modifier = Modifier.weight(1f),
-                        onClick = { /* TODO: StoreSettingsScreen */ },
+                        onClick = { navigator.push(StoreSettingsScreen(companyId)) },
                     )
                 }
             }

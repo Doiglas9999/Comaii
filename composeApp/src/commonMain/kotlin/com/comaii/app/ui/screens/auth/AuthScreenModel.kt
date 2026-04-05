@@ -19,6 +19,7 @@ data class AuthUiState(
     val error: String? = null,
     val isAuthenticated: Boolean = false,
     val companyId: String? = null,
+    val rememberCredentials: Boolean = false,
 )
 
 class AuthScreenModel(
@@ -47,6 +48,10 @@ class AuthScreenModel(
 
     fun onCompanyNameChange(name: String) {
         _state.value = _state.value.copy(companyName = name, error = null)
+    }
+
+    fun onRememberChange(value: Boolean) {
+        _state.value = _state.value.copy(rememberCredentials = value)
     }
 
     fun toggleMode() {

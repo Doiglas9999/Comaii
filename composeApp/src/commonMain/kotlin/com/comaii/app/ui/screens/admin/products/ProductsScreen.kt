@@ -1,5 +1,6 @@
 package com.comaii.app.ui.screens.admin.products
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -45,6 +47,10 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.koin.core.parameter.parametersOf
 import com.comaii.app.ui.util.formatPrice
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import com.comaii.shared.domain.model.Product
 
 data class ProductsScreen(val companyId: String) : Screen {
@@ -105,17 +111,48 @@ data class ProductsScreen(val companyId: String) : Screen {
                     )
                 }
             } else {
+                val categoryMap = state.categories.associateBy { it.id }
+                // Group by categoryId (String, never null). Unknown/empty = "Sem categoria"
+                val grouped: Map<String, List<Product>> = state.products.groupBy { it.categoryId }
+                // Show known categories in order, then "Sem categoria" at the end
+                val orderedKeys: List<String> = state.categories
+                    .map { it.id }
+                    .filter { grouped.containsKey(it) } +
+                    grouped.keys.filter { it.isEmpty() || !categoryMap.containsKey(it) }
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(state.products, key = { it.id }) { product ->
-                        ProductCard(
-                            product = product,
-                            categoryName = state.categories.find { it.id == product.categoryId }?.name,
-                            onEdit = { screenModel.showAddProductDialog(product) },
-                            onDelete = { screenModel.deleteProduct(product.id) },
-                        )
+                    orderedKeys.forEach { categoryId ->
+                        val categoryName = categoryMap[categoryId]?.name
+                            ?: "Sem categoria"
+                        val products = grouped[categoryId] ?: emptyList()
+
+                        item(key = "header_$categoryId") {
+                            Text(
+                                text = categoryName,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        shape = RoundedCornerShape(8.dp),
+                                    )
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                            )
+                        }
+
+                        items(products, key = { it.id }) { product ->
+                            ProductCard(
+                                product = product,
+                                categoryName = null,
+                                onEdit = { screenModel.showAddProductDialog(product) },
+                                onDelete = { screenModel.deleteProduct(product.id) },
+                            )
+                        }
                     }
                 }
             }
@@ -128,6 +165,7 @@ data class ProductsScreen(val companyId: String) : Screen {
                 onNameChange = screenModel::onFormNameChange,
                 onDescriptionChange = screenModel::onFormDescriptionChange,
                 onPriceChange = screenModel::onFormPriceChange,
+                onImageUrlChange = screenModel::onFormImageUrlChange,
                 onCategoryChange = screenModel::onFormCategoryIdChange,
                 onSave = screenModel::saveProduct,
                 onDismiss = screenModel::hideAddProductDialog,
@@ -180,6 +218,18 @@ fun ProductCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (product.imageUrl.isNotEmpty()) {
+                AsyncImage(
+                    model = product.imageUrl,
+                    contentDescription = product.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = product.name,
@@ -225,6 +275,7 @@ fun AddProductDialog(
     onNameChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onPriceChange: (String) -> Unit,
+    onImageUrlChange: (String) -> Unit,
     onCategoryChange: (String) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
@@ -259,6 +310,23 @@ fun AddProductDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                OutlinedTextField(
+                    value = state.formImageUrl,
+                    onValueChange = onImageUrlChange,
+                    label = { Text("URL da imagem (opcional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (state.formImageUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = state.formImageUrl,
+                        contentDescription = "Preview",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                    )
+                }
 
                 // Seletor de categoria
                 if (state.categories.isNotEmpty()) {

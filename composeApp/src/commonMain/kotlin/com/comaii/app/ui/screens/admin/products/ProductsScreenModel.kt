@@ -21,6 +21,7 @@ data class ProductsUiState(
     val formDescription: String = "",
     val formPrice: String = "",
     val formCategoryId: String = "",
+    val formImageUrl: String = "",
     val formCategoryName: String = "",
     val error: String? = null,
 )
@@ -53,6 +54,7 @@ class ProductsScreenModel(
             formName = product?.name ?: "",
             formDescription = product?.description ?: "",
             formPrice = product?.price?.toString() ?: "",
+            formImageUrl = product?.imageUrl ?: "",
             formCategoryId = product?.categoryId ?: "",
             error = null,
         )
@@ -61,7 +63,7 @@ class ProductsScreenModel(
     fun hideAddProductDialog() {
         _state.value = _state.value.copy(
             showAddDialog = false, editingProduct = null,
-            formName = "", formDescription = "", formPrice = "", formCategoryId = "",
+            formName = "", formDescription = "", formPrice = "", formImageUrl = "", formCategoryId = "",
         )
     }
 
@@ -76,6 +78,7 @@ class ProductsScreenModel(
     fun onFormNameChange(value: String) { _state.value = _state.value.copy(formName = value, error = null) }
     fun onFormDescriptionChange(value: String) { _state.value = _state.value.copy(formDescription = value) }
     fun onFormPriceChange(value: String) { _state.value = _state.value.copy(formPrice = value, error = null) }
+    fun onFormImageUrlChange(value: String) { _state.value = _state.value.copy(formImageUrl = value) }
     fun onFormCategoryIdChange(value: String) { _state.value = _state.value.copy(formCategoryId = value) }
     fun onFormCategoryNameChange(value: String) { _state.value = _state.value.copy(formCategoryName = value) }
 
@@ -96,13 +99,15 @@ class ProductsScreenModel(
                 val product = if (s.editingProduct != null) {
                     s.editingProduct.copy(
                         name = s.formName, description = s.formDescription,
-                        price = price, categoryId = s.formCategoryId,
+                        price = price, imageUrl = s.formImageUrl,
+                        categoryId = s.formCategoryId,
                     )
                 } else {
                     Product(
                         companyId = companyId, name = s.formName,
                         description = s.formDescription, price = price,
-                        categoryId = s.formCategoryId, order = s.products.size,
+                        imageUrl = s.formImageUrl, categoryId = s.formCategoryId,
+                        order = s.products.size,
                     )
                 }
                 firebase.saveProduct(product)
