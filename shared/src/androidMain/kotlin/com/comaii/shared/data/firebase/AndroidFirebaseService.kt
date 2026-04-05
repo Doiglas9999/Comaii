@@ -2,6 +2,7 @@ package com.comaii.shared.data.firebase
 
 import com.comaii.shared.domain.model.Category
 import com.comaii.shared.domain.model.Company
+import com.comaii.shared.domain.model.Expense
 import com.comaii.shared.domain.model.Order
 import com.comaii.shared.domain.model.OrderStatus
 import com.comaii.shared.domain.model.Product
@@ -90,8 +91,7 @@ class AndroidFirebaseService : FirebaseService {
 
     // ========== PRODUCTS ==========
     override fun observeProducts(companyId: String): Flow<List<Product>> {
-        return firestore.collection("products")
-            .where { "companyId" equalTo companyId }
+        return firestore.collection("companies").document(companyId).collection("products")
             .snapshots
             .map { snapshot ->
                 snapshot.documents.map { it.data<Product>() }.sortedBy { it.order }
@@ -99,7 +99,7 @@ class AndroidFirebaseService : FirebaseService {
     }
 
     override suspend fun saveProduct(product: Product): String {
-        val col = firestore.collection("products")
+        val col = firestore.collection("companies").document(product.companyId).collection("products")
         return if (product.id.isEmpty()) {
             val docRef = col.document
             val newProduct = product.copy(id = docRef.id)
@@ -111,22 +111,21 @@ class AndroidFirebaseService : FirebaseService {
         }
     }
 
-    override suspend fun deleteProduct(productId: String) {
-        firestore.collection("products").document(productId).delete()
+    override suspend fun deleteProduct(companyId: String, productId: String) {
+        firestore.collection("companies").document(companyId).collection("products").document(productId).delete()
     }
 
     // ========== CATEGORIES ==========
     override fun observeCategories(companyId: String): Flow<List<Category>> {
-        return firestore.collection("categories")
-            .where { "companyId" equalTo companyId }
+        return firestore.collection("companies").document(companyId).collection("categories")
             .snapshots
             .map { snapshot ->
                 snapshot.documents.map { it.data<Category>() }.sortedBy { it.order }
             }
     }
 
-    override suspend fun saveCategory(category: Category): String {
-        val col = firestore.collection("categories")
+    override suspend fun saveCategory(companyId: String, category: Category): String {
+        val col = firestore.collection("companies").document(category.companyId).collection("categories")
         return if (category.id.isEmpty()) {
             val docRef = col.document
             val newCategory = category.copy(id = docRef.id)
@@ -138,13 +137,13 @@ class AndroidFirebaseService : FirebaseService {
         }
     }
 
-    override suspend fun deleteCategory(categoryId: String) {
-        firestore.collection("categories").document(categoryId).delete()
+    override suspend fun deleteCategory(companyId: String, categoryId: String) {
+        firestore.collection("companies").document(companyId).collection("categories").document(categoryId).delete()
     }
 
     // ========== ORDERS ==========
-    override suspend fun createOrder(order: Order): String {
-        val col = firestore.collection("orders")
+    override suspend fun createOrder(companyId: String, order: Order): String {
+        val col = firestore.collection("companies").document(order.companyId).collection("orders")
         val docRef = col.document
         val newOrder = order.copy(
             id = docRef.id,
@@ -155,8 +154,7 @@ class AndroidFirebaseService : FirebaseService {
     }
 
     override fun observeOrders(companyId: String): Flow<List<Order>> {
-        return firestore.collection("orders")
-            .where { "companyId" equalTo companyId }
+        return firestore.collection("companies").document(companyId).collection("orders")
             .snapshots
             .map { snapshot ->
                 snapshot.documents.map { it.data<Order>() }
@@ -164,7 +162,28 @@ class AndroidFirebaseService : FirebaseService {
             }
     }
 
-    override suspend fun updateOrderStatus(orderId: String, status: OrderStatus) {
-        firestore.collection("orders").document(orderId).update("status" to status.name)
+    override suspend fun updateOrderStatus(companyId: String, orderId: String, status: OrderStatus) {
+        firestore.collection("companies").document(companyId).collection("orders").document(orderId).update("status" to status.name)
+    }
+
+    // ========== EXPENSES ==========
+    override suspend fun addExpense(companyId: String, expense: Expense): String {
+        val col = firestore.collection("companies").document(companyId).collection("expenses")
+        val docRef = col.document
+        val newExpense = expense.copy(id = docRef.id, companyId = companyId, date = if (expense.date == 0L) Clock.System.now().toEpochMilliseconds() else expense.date)
+        docRef.set(newExpense)
+        return docRef.id
+    }
+
+    override fun observeExpenses(companyId: String): Flow<List<Expense>> {
+        return firestore.collection("companies").document(companyId).collection("expenses")
+            .snapshots
+            .map { snapshot ->
+                snapshot.documents.map { it.data<Expense>() }.sortedByDescending { it.date }
+            }
+    }
+
+    override suspend fun deleteExpense(companyId: String, expenseId: String) {
+        firestore.collection("companies").document(companyId).collection("expenses").document(expenseId).delete()
     }
 }

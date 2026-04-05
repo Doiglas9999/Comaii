@@ -10,6 +10,7 @@ data class Product(
     val description: String = "",
     val price: Double = 0.0,
     val imageUrl: String = "",
+    val cost: Double = 0.0,
     val categoryId: String = "",
     val isAvailable: Boolean = true,
     val order: Int = 0,

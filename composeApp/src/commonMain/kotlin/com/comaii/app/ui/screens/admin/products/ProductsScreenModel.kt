@@ -124,6 +124,7 @@ class ProductsScreenModel(
 
         screenModelScope.launch {
             firebase.saveCategory(
+                companyId,
                 Category(companyId = companyId, name = name, order = _state.value.categories.size)
             )
             hideAddCategoryDialog()
@@ -131,6 +132,6 @@ class ProductsScreenModel(
     }
 
     fun deleteProduct(productId: String) {
-        screenModelScope.launch { firebase.deleteProduct(productId) }
+        screenModelScope.launch { firebase.deleteProduct(companyId, productId) }
     }
 }

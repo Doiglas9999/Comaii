@@ -198,6 +198,7 @@ data class CartScreen(val companyId: String) : Screen {
                                 if (customerName.isNotBlank() && customerPhone.isNotBlank()) {
                                     scope.launch {
                                         firebase.createOrder(
+                                            companyId,
                                             Order(
                                                 companyId = companyId,
                                                 customerName = customerName,

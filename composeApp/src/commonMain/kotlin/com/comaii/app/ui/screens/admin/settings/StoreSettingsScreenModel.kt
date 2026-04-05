@@ -4,6 +4,8 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.comaii.shared.data.firebase.FirebaseService
 import com.comaii.shared.domain.model.Company
+import com.comaii.shared.domain.model.DaySchedule
+import com.comaii.shared.domain.model.WorkingDays
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,7 @@ data class StoreSettingsUiState(
     val secondaryColor: String = "#FFFFFF",
     val accentColor: String = "#333333",
     val isOpen: Boolean = true,
+    val workingDays: WorkingDays = WorkingDays(),
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val error: String? = null,
@@ -50,6 +53,7 @@ class StoreSettingsScreenModel(
                         secondaryColor = company.secondaryColor,
                         accentColor = company.accentColor,
                         isOpen = company.isOpen,
+                        workingDays = company.workingDays,
                         isLoading = false,
                     )
                 } else if (company != null) {
@@ -91,6 +95,35 @@ class StoreSettingsScreenModel(
         _state.value = _state.value.copy(isOpen = !_state.value.isOpen, saveSuccess = false)
     }
 
+    fun onDayToggle(day: String, isOpen: Boolean) {
+        val updated = updateDay(day) { it.copy(isOpen = isOpen) }
+        _state.value = _state.value.copy(workingDays = updated, saveSuccess = false)
+    }
+
+    fun onDayOpenTimeChange(day: String, time: String) {
+        val updated = updateDay(day) { it.copy(openTime = time) }
+        _state.value = _state.value.copy(workingDays = updated, saveSuccess = false)
+    }
+
+    fun onDayCloseTimeChange(day: String, time: String) {
+        val updated = updateDay(day) { it.copy(closeTime = time) }
+        _state.value = _state.value.copy(workingDays = updated, saveSuccess = false)
+    }
+
+    private fun updateDay(day: String, transform: (DaySchedule) -> DaySchedule): WorkingDays {
+        val wd = _state.value.workingDays
+        return when (day) {
+            "monday" -> wd.copy(monday = transform(wd.monday))
+            "tuesday" -> wd.copy(tuesday = transform(wd.tuesday))
+            "wednesday" -> wd.copy(wednesday = transform(wd.wednesday))
+            "thursday" -> wd.copy(thursday = transform(wd.thursday))
+            "friday" -> wd.copy(friday = transform(wd.friday))
+            "saturday" -> wd.copy(saturday = transform(wd.saturday))
+            "sunday" -> wd.copy(sunday = transform(wd.sunday))
+            else -> wd
+        }
+    }
+
     fun save() {
         val s = _state.value
         if (s.name.isBlank()) {
@@ -114,6 +147,7 @@ class StoreSettingsScreenModel(
                         secondaryColor = s.secondaryColor,
                         accentColor = s.accentColor,
                         isOpen = s.isOpen,
+                        workingDays = s.workingDays,
                     )
                 )
                 _state.value = _state.value.copy(isSaving = false, saveSuccess = true)

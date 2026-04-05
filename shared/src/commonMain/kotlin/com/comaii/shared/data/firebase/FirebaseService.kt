@@ -1,10 +1,11 @@
 package com.comaii.shared.data.firebase
 
+import com.comaii.shared.domain.model.Category
 import com.comaii.shared.domain.model.Company
+import com.comaii.shared.domain.model.Expense
 import com.comaii.shared.domain.model.Order
 import com.comaii.shared.domain.model.OrderStatus
 import com.comaii.shared.domain.model.Product
-import com.comaii.shared.domain.model.Category
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -29,15 +30,20 @@ interface FirebaseService {
     // Products
     fun observeProducts(companyId: String): Flow<List<Product>>
     suspend fun saveProduct(product: Product): String
-    suspend fun deleteProduct(productId: String)
+    suspend fun deleteProduct(companyId: String, productId: String)
 
     // Categories
     fun observeCategories(companyId: String): Flow<List<Category>>
-    suspend fun saveCategory(category: Category): String
-    suspend fun deleteCategory(categoryId: String)
+    suspend fun saveCategory(companyId: String, category: Category): String
+    suspend fun deleteCategory(companyId: String, categoryId: String)
 
     // Orders
-    suspend fun createOrder(order: Order): String
+    suspend fun createOrder(companyId: String, order: Order): String
     fun observeOrders(companyId: String): Flow<List<Order>>
-    suspend fun updateOrderStatus(orderId: String, status: OrderStatus)
+    suspend fun updateOrderStatus(companyId: String, orderId: String, status: OrderStatus)
+
+    // Expenses
+    suspend fun addExpense(companyId: String, expense: Expense): String
+    fun observeExpenses(companyId: String): Flow<List<Expense>>
+    suspend fun deleteExpense(companyId: String, expenseId: String)
 }

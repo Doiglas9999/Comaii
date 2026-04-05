@@ -30,6 +30,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.comaii.app.ui.screens.admin.categories.CategoriesScreen
+import com.comaii.app.ui.screens.admin.orders.OrdersDashboardScreen
 import com.comaii.app.ui.screens.admin.products.ProductsScreen
 import com.comaii.app.ui.screens.admin.settings.StoreSettingsScreen
 import com.comaii.app.ui.screens.auth.AuthScreen
@@ -108,7 +110,7 @@ data class AdminDashboardScreen(val companyId: String) : Screen {
                         title = "Pedidos",
                         count = "${state.orderCount}",
                         modifier = Modifier.weight(1f),
-                        onClick = { /* TODO: OrdersScreen */ },
+                        onClick = { navigator.push(OrdersDashboardScreen(companyId)) },
                     )
                 }
 
@@ -120,7 +122,7 @@ data class AdminDashboardScreen(val companyId: String) : Screen {
                         title = "Categorias",
                         count = "${state.categoryCount}",
                         modifier = Modifier.weight(1f),
-                        onClick = { /* TODO: CategoriesScreen */ },
+                        onClick = { navigator.push(CategoriesScreen(companyId)) },
                     )
                     DashboardCard(
                         title = "Configurar Loja",
