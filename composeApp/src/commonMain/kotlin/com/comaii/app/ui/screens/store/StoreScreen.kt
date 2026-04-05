@@ -41,6 +41,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.core.parameter.parametersOf
 import com.comaii.app.ui.screens.cart.CartScreen
 import com.comaii.app.ui.util.formatPrice
 import com.comaii.app.ui.theme.ComaiiTheme
@@ -51,7 +52,7 @@ data class StoreScreen(val companyId: String) : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
-        val screenModel = koinScreenModel<StoreScreenModel>()
+        val screenModel = koinScreenModel<StoreScreenModel> { parametersOf(companyId) }
         val state by screenModel.state.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
 

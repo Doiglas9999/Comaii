@@ -37,6 +37,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.core.parameter.parametersOf
 import com.comaii.app.ui.screens.store.StoreScreenModel
 import com.comaii.app.ui.util.formatPrice
 import com.comaii.shared.data.firebase.FirebaseService
@@ -50,7 +51,7 @@ data class CartScreen(val companyId: String) : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
-        val storeModel = koinScreenModel<StoreScreenModel>()
+        val storeModel = koinScreenModel<StoreScreenModel> { parametersOf(companyId) }
         val state by storeModel.state.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
         val firebase = koinInject<FirebaseService>()

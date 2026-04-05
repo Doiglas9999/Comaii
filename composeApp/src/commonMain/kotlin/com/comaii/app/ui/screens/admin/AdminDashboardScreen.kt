@@ -33,6 +33,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.comaii.app.ui.screens.admin.products.ProductsScreen
 import com.comaii.app.ui.screens.auth.AuthScreen
 import com.comaii.app.ui.screens.auth.AuthScreenModel
+import org.koin.core.parameter.parametersOf
 
 data class AdminDashboardScreen(val companyId: String) : Screen {
 
@@ -40,7 +41,7 @@ data class AdminDashboardScreen(val companyId: String) : Screen {
     @Composable
     override fun Content() {
         val authScreenModel = koinScreenModel<AuthScreenModel>()
-        val dashboardModel = koinScreenModel<AdminDashboardScreenModel>()
+        val dashboardModel = koinScreenModel<AdminDashboardScreenModel> { parametersOf(companyId) }
         val state by dashboardModel.state.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
 
