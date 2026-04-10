@@ -6,6 +6,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.browser.localStorage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Clock
@@ -27,6 +28,69 @@ class WasmFirebaseService(
     override val isLoggedIn: Boolean get() = _authState.value != null
     override fun observeAuthState(): Flow<String?> = _authState
 
+    // Scope for background tasks (token refresh)
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    init {
+        restoreSession()
+    }
+
+    // ========== SESSION PERSISTENCE ==========
+
+    private fun restoreSession() {
+        try {
+            val savedUserId = localStorage.getItem("comaii_auth_user") ?: return
+            val savedRefresh = localStorage.getItem("comaii_auth_refresh") ?: return
+            // Restore userId immediately so UI shows as logged in
+            _authState.value = savedUserId
+            idToken = localStorage.getItem("comaii_auth_token")
+            // Refresh token in background to get a fresh idToken
+            serviceScope.launch { refreshSession(savedRefresh) }
+        } catch (_: Exception) {}
+    }
+
+    private suspend fun refreshSession(refreshToken: String) {
+        try {
+            val response = httpClient.post(
+                "https://securetoken.googleapis.com/v1/token?key=$apiKey"
+            ) {
+                contentType(ContentType.Application.Json)
+                setBody("""{"grant_type":"refresh_token","refresh_token":"$refreshToken"}""")
+            }
+            if (response.status.isSuccess()) {
+                val body = json.parseToJsonElement(response.bodyAsText()).jsonObject
+                val newToken = body["id_token"]?.jsonPrimitive?.content ?: return
+                val newUserId = body["user_id"]?.jsonPrimitive?.content ?: return
+                val newRefresh = body["refresh_token"]?.jsonPrimitive?.content ?: return
+                idToken = newToken
+                _authState.value = newUserId
+                saveSession(newToken, newUserId, newRefresh)
+            } else {
+                clearSession()
+            }
+        } catch (_: Exception) {
+            // Keep restored state; API calls will work if token is still valid
+        }
+    }
+
+    private fun saveSession(token: String, userId: String, refreshToken: String) {
+        try {
+            localStorage.setItem("comaii_auth_token", token)
+            localStorage.setItem("comaii_auth_user", userId)
+            localStorage.setItem("comaii_auth_refresh", refreshToken)
+        } catch (_: Exception) {}
+    }
+
+    private fun clearSession() {
+        try {
+            localStorage.removeItem("comaii_auth_token")
+            localStorage.removeItem("comaii_auth_user")
+            localStorage.removeItem("comaii_auth_refresh")
+        } catch (_: Exception) {}
+        idToken = null
+        _authState.value = null
+    }
+
     // ========== AUTH ==========
 
     @Serializable
@@ -40,6 +104,7 @@ class WasmFirebaseService(
     private data class AuthResponse(
         val localId: String = "",
         val idToken: String = "",
+        val refreshToken: String = "",
         val error: AuthError? = null
     )
 
@@ -60,6 +125,7 @@ class WasmFirebaseService(
             } else {
                 idToken = body.idToken
                 _authState.value = body.localId
+                saveSession(body.idToken, body.localId, body.refreshToken)
                 Result.success(body.localId)
             }
         } catch (e: Exception) {
@@ -74,8 +140,7 @@ class WasmFirebaseService(
         authRequest("accounts:signUp", email, password)
 
     override suspend fun signOut() {
-        idToken = null
-        _authState.value = null
+        clearSession()
     }
 
     // ========== FIRESTORE HELPERS ==========
@@ -228,7 +293,6 @@ class WasmFirebaseService(
 
     override suspend fun getCompanyBySlug(slug: String): Company? {
         return try {
-            // Firestore REST runQuery com StructuredQuery
             val queryBody = """
                 {
                   "structuredQuery": {
@@ -337,6 +401,7 @@ class WasmFirebaseService(
         setDocument("companies/$companyId/orders/$orderId", objectToFields(updated))
     }
 
+    // Queries a subcollection with a simple equality filter (no orderBy — avoids needing a composite index)
     private suspend fun runQueryInSubcollection(
         parentPath: String,
         collectionId: String,
@@ -354,8 +419,7 @@ class WasmFirebaseService(
                         "op": "EQUAL",
                         "value": {"stringValue": "$fieldValue"}
                       }
-                    },
-                    "orderBy": [{"field": {"fieldPath": "createdAt"}, "direction": "DESCENDING"}]
+                    }
                   }
                 }
             """.trimIndent()
@@ -379,6 +443,7 @@ class WasmFirebaseService(
         }
     }
 
+    // Sort in Kotlin to avoid needing a composite Firestore index
     override fun observeCustomerOrders(companyId: String, customerId: String): Flow<List<Order>> = pollingFlow {
         runQueryInSubcollection(
             parentPath = "companies/$companyId",
@@ -386,6 +451,7 @@ class WasmFirebaseService(
             fieldPath = "customerId",
             fieldValue = customerId,
         ).mapNotNull { documentToObject<Order>(it) }
+            .sortedByDescending { it.createdAt }
     }
 
     // ========== EXPENSES ==========

@@ -19,16 +19,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -186,15 +183,12 @@ private fun AuthGateContent(state: StoreUiState, screenModel: StoreScreenModel) 
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                // Company logo or emoji placeholder
                 if (state.company?.logoUrl?.isNotEmpty() == true) {
                     AsyncImage(
                         model = state.company.logoUrl,
                         contentDescription = "Logo",
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape),
+                        modifier = Modifier.size(96.dp).clip(CircleShape),
                     )
                 } else {
                     Box(
@@ -384,32 +378,38 @@ private fun StoreContent(
         },
         floatingActionButton = {
             if (state.cartItems.isNotEmpty()) {
-                ExtendedFloatingActionButton(
+                // Custom FAB with text only — avoids Material Icons dependency issues on WasmJS
+                FloatingActionButton(
                     onClick = onCartClick,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
-                    icon = {
-                        BadgedBox(
-                            badge = {
-                                Badge(
-                                    containerColor = MaterialTheme.colorScheme.error,
-                                    contentColor = MaterialTheme.colorScheme.onError,
-                                ) {
-                                    Text("${state.cartItemCount}")
-                                }
-                            },
-                        ) {
-                            Text("🛒", style = MaterialTheme.typography.titleMedium)
-                        }
-                    },
-                    text = {
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("🛒", style = MaterialTheme.typography.titleSmall)
                         Text(
                             text = "R$ ${state.cartTotal.formatPrice()}",
-                            fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
                         )
-                    },
-                )
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.error,
+                        ) {
+                            Text(
+                                text = "${state.cartItemCount}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onError,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                }
             }
         },
     ) { padding ->
@@ -465,7 +465,7 @@ private fun StoreContent(
                 }
             }
 
-            // Category filter chips
+            // Category filter chips — custom implementation, no Material Icons
             if (state.categoryNames.isNotEmpty()) {
                 item {
                     LazyRow(
@@ -474,17 +474,17 @@ private fun StoreContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         item {
-                            FilterChip(
+                            CategoryChip(
+                                text = "Todos",
                                 selected = state.selectedCategory == null,
                                 onClick = { screenModel.selectCategory(null) },
-                                label = { Text("Todos") },
                             )
                         }
                         items(state.categoryNames) { catName ->
-                            FilterChip(
+                            CategoryChip(
+                                text = catName,
                                 selected = state.selectedCategory == catName,
                                 onClick = { screenModel.selectCategory(catName) },
-                                label = { Text(catName) },
                             )
                         }
                     }
@@ -492,13 +492,11 @@ private fun StoreContent(
                 }
             }
 
-            // Products: filtered or all grouped by category
+            // Products
             if (state.selectedCategory != null) {
                 val filtered = state.filteredProducts
                 if (filtered.isEmpty()) {
-                    item {
-                        EmptyProductsContent()
-                    }
+                    item { EmptyProductsContent() }
                 } else {
                     items(filtered, key = { it.id }) { product ->
                         StoreProductCard(
@@ -521,10 +519,7 @@ private fun StoreContent(
                                 text = categoryName,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(
-                                    horizontal = 16.dp,
-                                    vertical = 8.dp,
-                                ),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             )
                         }
                         items(categoryProducts, key = { it.id }) { product ->
@@ -540,6 +535,37 @@ private fun StoreContent(
                 }
             }
         }
+    }
+}
+
+// Custom chip — uses only Surface + Text, avoids Material Icons checkmark rendering issues on WasmJS
+@Composable
+private fun CategoryChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val containerColor = if (selected)
+        MaterialTheme.colorScheme.primaryContainer
+    else
+        MaterialTheme.colorScheme.surfaceVariant
+    val contentColor = if (selected)
+        MaterialTheme.colorScheme.onPrimaryContainer
+    else
+        MaterialTheme.colorScheme.onSurfaceVariant
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        color = containerColor,
+        contentColor = contentColor,
+    ) {
+        Text(
+            text = if (selected) "✓  $text" else text,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
     }
 }
 
@@ -582,7 +608,6 @@ fun StoreProductCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top,
         ) {
-            // Left: product info
             Column(
                 modifier = Modifier.weight(1f).padding(end = 12.dp),
             ) {
@@ -610,7 +635,6 @@ fun StoreProductCard(
                 )
             }
 
-            // Right: image + quantity controls
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (product.imageUrl.isNotEmpty()) {
                     AsyncImage(
