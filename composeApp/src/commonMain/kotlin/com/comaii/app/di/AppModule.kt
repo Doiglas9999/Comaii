@@ -6,6 +6,7 @@ import com.comaii.app.ui.screens.admin.orders.OrdersDashboardScreenModel
 import com.comaii.app.ui.screens.admin.products.ProductsScreenModel
 import com.comaii.app.ui.screens.admin.settings.StoreSettingsScreenModel
 import com.comaii.app.ui.screens.auth.AuthScreenModel
+import com.comaii.app.ui.screens.customer.CustomerOrdersScreenModel
 import com.comaii.app.ui.screens.store.StoreScreenModel
 import com.comaii.shared.di.platformModule
 import com.comaii.shared.di.sharedModule
@@ -20,6 +21,7 @@ val appModule = module {
     factory { params -> StoreSettingsScreenModel(params.get(), get()) }
     factory { params -> CategoriesScreenModel(params.get(), get()) }
     factory { params -> OrdersDashboardScreenModel(params.get(), get()) }
+    factory { (companyId: String, customerId: String) -> CustomerOrdersScreenModel(companyId, customerId, get()) }
 }
 
 val allModules = listOf(platformModule(), sharedModule, appModule)

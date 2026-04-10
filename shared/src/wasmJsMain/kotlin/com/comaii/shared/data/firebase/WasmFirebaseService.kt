@@ -226,7 +226,43 @@ class WasmFirebaseService(
         return documentToObject<Company>(doc)
     }
 
-    override suspend fun getCompanyBySlug(slug: String): Company? = null // Requires Firestore query; not supported via simple REST GET
+    override suspend fun getCompanyBySlug(slug: String): Company? {
+        return try {
+            // Firestore REST runQuery com StructuredQuery
+            val queryBody = """
+                {
+                  "structuredQuery": {
+                    "from": [{"collectionId": "companies"}],
+                    "where": {
+                      "fieldFilter": {
+                        "field": {"fieldPath": "slug"},
+                        "op": "EQUAL",
+                        "value": {"stringValue": "$slug"}
+                      }
+                    },
+                    "limit": 1
+                  }
+                }
+            """.trimIndent()
+
+            val response = httpClient.post(
+                "https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents:runQuery"
+            ) {
+                authorizedRequest(this)
+                contentType(ContentType.Application.Json)
+                setBody(queryBody)
+            }
+
+            if (!response.status.isSuccess()) return null
+
+            val results = json.parseToJsonElement(response.bodyAsText()).jsonArray
+            val docObj = results.firstOrNull()?.jsonObject?.get("document") as? JsonObject
+                ?: return null
+            documentToObject<Company>(docObj)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     override suspend fun saveCompany(company: Company): String {
         objectToFields(company).let { setDocument("companies/${company.id}", it) }
@@ -299,6 +335,57 @@ class WasmFirebaseService(
         val order = documentToObject<Order>(doc) ?: return
         val updated = order.copy(status = status)
         setDocument("companies/$companyId/orders/$orderId", objectToFields(updated))
+    }
+
+    private suspend fun runQueryInSubcollection(
+        parentPath: String,
+        collectionId: String,
+        fieldPath: String,
+        fieldValue: String,
+    ): List<JsonObject> {
+        return try {
+            val queryBody = """
+                {
+                  "structuredQuery": {
+                    "from": [{"collectionId": "$collectionId"}],
+                    "where": {
+                      "fieldFilter": {
+                        "field": {"fieldPath": "$fieldPath"},
+                        "op": "EQUAL",
+                        "value": {"stringValue": "$fieldValue"}
+                      }
+                    },
+                    "orderBy": [{"field": {"fieldPath": "createdAt"}, "direction": "DESCENDING"}]
+                  }
+                }
+            """.trimIndent()
+
+            val response = httpClient.post(
+                "https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents/$parentPath:runQuery"
+            ) {
+                authorizedRequest(this)
+                contentType(ContentType.Application.Json)
+                setBody(queryBody)
+            }
+
+            if (!response.status.isSuccess()) return emptyList()
+
+            val results = json.parseToJsonElement(response.bodyAsText()).jsonArray
+            results.mapNotNull { element ->
+                element.jsonObject["document"] as? JsonObject
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override fun observeCustomerOrders(companyId: String, customerId: String): Flow<List<Order>> = pollingFlow {
+        runQueryInSubcollection(
+            parentPath = "companies/$companyId",
+            collectionId = "orders",
+            fieldPath = "customerId",
+            fieldValue = customerId,
+        ).mapNotNull { documentToObject<Order>(it) }
     }
 
     // ========== EXPENSES ==========

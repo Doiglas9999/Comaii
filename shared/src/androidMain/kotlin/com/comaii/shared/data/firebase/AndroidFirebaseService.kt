@@ -166,6 +166,16 @@ class AndroidFirebaseService : FirebaseService {
         firestore.collection("companies").document(companyId).collection("orders").document(orderId).update("status" to status.name)
     }
 
+    override fun observeCustomerOrders(companyId: String, customerId: String): Flow<List<Order>> {
+        return firestore.collection("companies").document(companyId).collection("orders")
+            .where { "customerId" equalTo customerId }
+            .snapshots
+            .map { snapshot ->
+                snapshot.documents.map { it.data<Order>() }
+                    .sortedByDescending { it.createdAt }
+            }
+    }
+
     // ========== EXPENSES ==========
     override suspend fun addExpense(companyId: String, expense: Expense): String {
         val col = firestore.collection("companies").document(companyId).collection("expenses")

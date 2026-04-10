@@ -48,6 +48,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.comaii.shared.domain.model.DaySchedule
 import org.koin.core.parameter.parametersOf
+import com.comaii.app.getStoreBaseUrl
 
 private val PRESET_COLORS = listOf(
     "#FF6B00", "#E53935", "#8E24AA", "#1E88E5",
@@ -103,7 +104,12 @@ data class StoreSettingsScreen(val companyId: String) : Screen {
                 // Store link
                 if (state.slug.isNotEmpty()) {
                     Text(
-                        text = "Link da loja: comaii.com/${state.slug}",
+                        text = "Link da loja:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = "${getStoreBaseUrl()}/${state.slug}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -144,6 +150,33 @@ data class StoreSettingsScreen(val companyId: String) : Screen {
                     label = { Text("Endereco") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Imagens",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+
+                // Logo URL
+                OutlinedTextField(
+                    value = state.logoUrl,
+                    onValueChange = screenModel::onLogoUrlChange,
+                    label = { Text("URL do logo (opcional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("https://...") },
+                )
+
+                // Banner URL
+                OutlinedTextField(
+                    value = state.bannerUrl,
+                    onValueChange = screenModel::onBannerUrlChange,
+                    label = { Text("URL do banner (opcional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("https://...") },
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))

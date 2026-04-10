@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,11 +44,33 @@ class AuthScreen : Screen {
         val state by screenModel.state.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
 
-        // Navegar quando autenticado
-        LaunchedEffect(state.isAuthenticated) {
+        // Navegar quando autenticado como empresa
+        LaunchedEffect(state.isAuthenticated, state.companyId) {
             if (state.isAuthenticated && state.companyId != null) {
                 navigator.replaceAll(AdminDashboardScreen(state.companyId!!))
             }
+        }
+
+        // Tela de sucesso para cliente
+        if (state.isAuthenticated && state.companyId == null) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = "Conta criada!",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Para fazer seu pedido, acesse o link da loja compartilhado com você.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            return
         }
 
         Column(
@@ -78,16 +102,47 @@ class AuthScreen : Screen {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Campo nome da empresa (só no registro)
+            // Seletor de tipo de conta (só no registro)
             AnimatedVisibility(visible = !state.isLogin) {
-                OutlinedTextField(
-                    value = state.companyName,
-                    onValueChange = screenModel::onCompanyNameChange,
-                    label = { Text("Nome da empresa") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Button(
+                            onClick = { if (!state.isOwnerMode) screenModel.toggleOwnerMode() },
+                            modifier = Modifier.weight(1f),
+                            colors = if (state.isOwnerMode)
+                                ButtonDefaults.buttonColors()
+                            else
+                                ButtonDefaults.outlinedButtonColors(),
+                        ) {
+                            Text("Tenho uma loja")
+                        }
+                        OutlinedButton(
+                            onClick = { if (state.isOwnerMode) screenModel.toggleOwnerMode() },
+                            modifier = Modifier.weight(1f),
+                            colors = if (!state.isOwnerMode)
+                                ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                )
+                            else
+                                ButtonDefaults.outlinedButtonColors(),
+                        ) {
+                            Text("Sou cliente")
+                        }
+                    }
+                    if (state.isOwnerMode) {
+                        OutlinedTextField(
+                            value = state.companyName,
+                            onValueChange = screenModel::onCompanyNameChange,
+                            label = { Text("Nome da empresa") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        )
+                    }
+                }
             }
 
             if (!state.isLogin) Spacer(modifier = Modifier.height(8.dp))

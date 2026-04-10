@@ -165,6 +165,7 @@ data class ProductsScreen(val companyId: String) : Screen {
                 onNameChange = screenModel::onFormNameChange,
                 onDescriptionChange = screenModel::onFormDescriptionChange,
                 onPriceChange = screenModel::onFormPriceChange,
+                onCostChange = screenModel::onFormCostChange,
                 onImageUrlChange = screenModel::onFormImageUrlChange,
                 onCategoryChange = screenModel::onFormCategoryIdChange,
                 onSave = screenModel::saveProduct,
@@ -275,6 +276,7 @@ fun AddProductDialog(
     onNameChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onPriceChange: (String) -> Unit,
+    onCostChange: (String) -> Unit,
     onImageUrlChange: (String) -> Unit,
     onCategoryChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -307,6 +309,13 @@ fun AddProductDialog(
                     value = state.formPrice,
                     onValueChange = onPriceChange,
                     label = { Text("Preço (R$)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = state.formCost,
+                    onValueChange = onCostChange,
+                    label = { Text("Custo de fabricação (R$)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )

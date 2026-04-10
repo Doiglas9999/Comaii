@@ -9,6 +9,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        CredentialStorage.init(applicationContext)
 
         // Extrair companyId da deep link: comaii.com/{companyId}
         val companyId = intent?.data?.lastPathSegment ?: "default"

@@ -20,6 +20,7 @@ data class ProductsUiState(
     val formName: String = "",
     val formDescription: String = "",
     val formPrice: String = "",
+    val formCost: String = "",
     val formCategoryId: String = "",
     val formImageUrl: String = "",
     val formCategoryName: String = "",
@@ -54,6 +55,7 @@ class ProductsScreenModel(
             formName = product?.name ?: "",
             formDescription = product?.description ?: "",
             formPrice = product?.price?.toString() ?: "",
+            formCost = if (product != null && product.cost > 0) product.cost.toString() else "",
             formImageUrl = product?.imageUrl ?: "",
             formCategoryId = product?.categoryId ?: "",
             error = null,
@@ -63,7 +65,8 @@ class ProductsScreenModel(
     fun hideAddProductDialog() {
         _state.value = _state.value.copy(
             showAddDialog = false, editingProduct = null,
-            formName = "", formDescription = "", formPrice = "", formImageUrl = "", formCategoryId = "",
+            formName = "", formDescription = "", formPrice = "", formCost = "",
+            formImageUrl = "", formCategoryId = "",
         )
     }
 
@@ -78,6 +81,7 @@ class ProductsScreenModel(
     fun onFormNameChange(value: String) { _state.value = _state.value.copy(formName = value, error = null) }
     fun onFormDescriptionChange(value: String) { _state.value = _state.value.copy(formDescription = value) }
     fun onFormPriceChange(value: String) { _state.value = _state.value.copy(formPrice = value, error = null) }
+    fun onFormCostChange(value: String) { _state.value = _state.value.copy(formCost = value) }
     fun onFormImageUrlChange(value: String) { _state.value = _state.value.copy(formImageUrl = value) }
     fun onFormCategoryIdChange(value: String) { _state.value = _state.value.copy(formCategoryId = value) }
     fun onFormCategoryNameChange(value: String) { _state.value = _state.value.copy(formCategoryName = value) }
@@ -94,18 +98,20 @@ class ProductsScreenModel(
             return
         }
 
+        val cost = s.formCost.replace(",", ".").toDoubleOrNull() ?: 0.0
+
         screenModelScope.launch {
             try {
                 val product = if (s.editingProduct != null) {
                     s.editingProduct.copy(
                         name = s.formName, description = s.formDescription,
-                        price = price, imageUrl = s.formImageUrl,
+                        price = price, cost = cost, imageUrl = s.formImageUrl,
                         categoryId = s.formCategoryId,
                     )
                 } else {
                     Product(
                         companyId = companyId, name = s.formName,
-                        description = s.formDescription, price = price,
+                        description = s.formDescription, price = price, cost = cost,
                         imageUrl = s.formImageUrl, categoryId = s.formCategoryId,
                         order = s.products.size,
                     )

@@ -41,6 +41,7 @@ interface FirebaseService {
     suspend fun createOrder(companyId: String, order: Order): String
     fun observeOrders(companyId: String): Flow<List<Order>>
     suspend fun updateOrderStatus(companyId: String, orderId: String, status: OrderStatus)
+    fun observeCustomerOrders(companyId: String, customerId: String): Flow<List<Order>>
 
     // Expenses
     suspend fun addExpense(companyId: String, expense: Expense): String

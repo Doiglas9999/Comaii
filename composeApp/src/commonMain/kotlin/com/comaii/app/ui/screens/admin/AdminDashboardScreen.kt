@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -30,8 +28,10 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.comaii.app.getStoreBaseUrl
 import com.comaii.app.ui.screens.admin.categories.CategoriesScreen
 import com.comaii.app.ui.screens.admin.orders.OrdersDashboardScreen
+import com.comaii.app.ui.screens.admin.orders.OrdersListScreen
 import com.comaii.app.ui.screens.admin.products.ProductsScreen
 import com.comaii.app.ui.screens.admin.settings.StoreSettingsScreen
 import com.comaii.app.ui.screens.auth.AuthScreen
@@ -87,7 +87,7 @@ data class AdminDashboardScreen(val companyId: String) : Screen {
                         style = MaterialTheme.typography.headlineSmall,
                     )
                     Text(
-                        text = "Link da loja: comaii.com/${state.company!!.slug}",
+                        text = "${getStoreBaseUrl()}/${state.company!!.slug}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -95,7 +95,7 @@ data class AdminDashboardScreen(val companyId: String) : Screen {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Cards do dashboard
+                // Linha 1: Produtos | Pedidos
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -108,12 +108,14 @@ data class AdminDashboardScreen(val companyId: String) : Screen {
                     )
                     DashboardCard(
                         title = "Pedidos",
-                        count = "${state.orderCount}",
+                        count = if (state.pendingOrderCount > 0) "${state.pendingOrderCount} novos" else "${state.orderCount}",
+                        highlight = state.pendingOrderCount > 0,
                         modifier = Modifier.weight(1f),
-                        onClick = { navigator.push(OrdersDashboardScreen(companyId)) },
+                        onClick = { navigator.push(OrdersListScreen(companyId)) },
                     )
                 }
 
+                // Linha 2: Categorias | Dashboard
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -125,12 +127,20 @@ data class AdminDashboardScreen(val companyId: String) : Screen {
                         onClick = { navigator.push(CategoriesScreen(companyId)) },
                     )
                     DashboardCard(
-                        title = "Configurar Loja",
+                        title = "Dashboard",
                         count = "",
                         modifier = Modifier.weight(1f),
-                        onClick = { navigator.push(StoreSettingsScreen(companyId)) },
+                        onClick = { navigator.push(OrdersDashboardScreen(companyId)) },
                     )
                 }
+
+                // Linha 3: Configurar Loja (largura total)
+                DashboardCard(
+                    title = "Configurar Loja",
+                    count = "",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { navigator.push(StoreSettingsScreen(companyId)) },
+                )
             }
         }
     }
@@ -142,14 +152,28 @@ fun DashboardCard(
     title: String,
     count: String,
     modifier: Modifier = Modifier,
+    highlight: Boolean = false,
     onClick: () -> Unit = {},
 ) {
+    val containerColor = if (highlight)
+        MaterialTheme.colorScheme.errorContainer
+    else
+        MaterialTheme.colorScheme.primaryContainer
+
+    val contentColor = if (highlight)
+        MaterialTheme.colorScheme.onErrorContainer
+    else
+        MaterialTheme.colorScheme.onPrimaryContainer
+
+    val countColor = if (highlight)
+        MaterialTheme.colorScheme.error
+    else
+        MaterialTheme.colorScheme.primary
+
     Card(
         onClick = onClick,
         modifier = modifier.height(120.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
     ) {
         Column(
             modifier = Modifier
@@ -161,14 +185,15 @@ fun DashboardCard(
             if (count.isNotEmpty()) {
                 Text(
                     text = count,
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = countColor,
                 )
             }
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = contentColor,
             )
         }
     }

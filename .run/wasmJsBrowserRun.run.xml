@@ -13,9 +13,9 @@
           <option value=":composeApp:wasmJsBrowserDevelopmentRun" />
         </list>
       </option>
-      <option name="vmOptions" />
+      <option name="vmOptions" value="" />
     </ExternalSystemSettings>
-    <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
+    <GradleScriptDebugEnabled>false</GradleScriptDebugEnabled>
     <method v="2" />
   </configuration>
 </component>

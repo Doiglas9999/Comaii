@@ -17,6 +17,8 @@ data class StoreSettingsUiState(
     val slug: String = "",
     val phone: String = "",
     val address: String = "",
+    val logoUrl: String = "",
+    val bannerUrl: String = "",
     val primaryColor: String = "#FF6B00",
     val secondaryColor: String = "#FFFFFF",
     val accentColor: String = "#333333",
@@ -49,6 +51,8 @@ class StoreSettingsScreenModel(
                         slug = company.slug,
                         phone = company.phone,
                         address = company.address,
+                        logoUrl = company.logoUrl,
+                        bannerUrl = company.bannerUrl,
                         primaryColor = company.primaryColor,
                         secondaryColor = company.secondaryColor,
                         accentColor = company.accentColor,
@@ -77,6 +81,14 @@ class StoreSettingsScreenModel(
 
     fun onAddressChange(value: String) {
         _state.value = _state.value.copy(address = value, error = null, saveSuccess = false)
+    }
+
+    fun onLogoUrlChange(value: String) {
+        _state.value = _state.value.copy(logoUrl = value, error = null, saveSuccess = false)
+    }
+
+    fun onBannerUrlChange(value: String) {
+        _state.value = _state.value.copy(bannerUrl = value, error = null, saveSuccess = false)
     }
 
     fun onPrimaryColorChange(value: String) {
@@ -143,6 +155,8 @@ class StoreSettingsScreenModel(
                         description = s.description,
                         phone = s.phone,
                         address = s.address,
+                        logoUrl = s.logoUrl,
+                        bannerUrl = s.bannerUrl,
                         primaryColor = s.primaryColor,
                         secondaryColor = s.secondaryColor,
                         accentColor = s.accentColor,
