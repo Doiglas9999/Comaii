@@ -5,6 +5,8 @@ import kotlinx.browser.localStorage
 actual object CredentialStorage {
     private const val KEY_EMAIL = "comaii_email"
     private const val KEY_PASSWORD = "comaii_password"
+    private const val KEY_CUST_EMAIL = "comaii_cust_email"
+    private const val KEY_CUST_PASSWORD = "comaii_cust_password"
 
     actual fun save(email: String, password: String) {
         localStorage.setItem(KEY_EMAIL, email)
@@ -21,5 +23,22 @@ actual object CredentialStorage {
     actual fun clear() {
         localStorage.removeItem(KEY_EMAIL)
         localStorage.removeItem(KEY_PASSWORD)
+    }
+
+    actual fun saveCustomer(email: String, password: String) {
+        localStorage.setItem(KEY_CUST_EMAIL, email)
+        localStorage.setItem(KEY_CUST_PASSWORD, password)
+    }
+
+    actual fun loadCustomer(): Pair<String, String>? {
+        val email = localStorage.getItem(KEY_CUST_EMAIL) ?: return null
+        val password = localStorage.getItem(KEY_CUST_PASSWORD) ?: return null
+        if (email.isBlank() || password.isBlank()) return null
+        return email to password
+    }
+
+    actual fun clearCustomer() {
+        localStorage.removeItem(KEY_CUST_EMAIL)
+        localStorage.removeItem(KEY_CUST_PASSWORD)
     }
 }

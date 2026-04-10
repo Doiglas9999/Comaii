@@ -2,6 +2,7 @@ package com.comaii.app.ui.screens.store
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import com.comaii.app.CredentialStorage
 import com.comaii.shared.data.firebase.FirebaseService
 import com.comaii.shared.domain.model.Category
 import com.comaii.shared.domain.model.Company
@@ -76,9 +77,7 @@ class StoreScreenModel(
     val state: StateFlow<StoreUiState> = _state.asStateFlow()
 
     init {
-        screenModelScope.launch {
-            resolveAndLoad()
-        }
+        // 1. Observe auth state changes (login/logout)
         screenModelScope.launch {
             firebase.observeAuthState().collect { userId ->
                 _state.value = _state.value.copy(
@@ -86,6 +85,26 @@ class StoreScreenModel(
                     currentUserId = userId,
                 )
             }
+        }
+
+        // 2. Auto-login with stored customer credentials (persistence across page refreshes)
+        screenModelScope.launch {
+            if (!firebase.isLoggedIn) {
+                CredentialStorage.loadCustomer()?.let { (email, password) ->
+                    _state.value = _state.value.copy(isAuthLoading = true)
+                    val result = firebase.signInWithEmail(email, password)
+                    _state.value = _state.value.copy(isAuthLoading = false)
+                    if (result.isFailure) {
+                        // Stored credentials are invalid (e.g. account deleted) — clear them
+                        CredentialStorage.clearCustomer()
+                    }
+                }
+            }
+        }
+
+        // 3. Resolve company and load store data
+        screenModelScope.launch {
+            resolveAndLoad()
         }
     }
 
@@ -139,6 +158,8 @@ class StoreScreenModel(
             }
             result.fold(
                 onSuccess = {
+                    // Persist credentials so login survives page refresh
+                    CredentialStorage.saveCustomer(current.authEmail, current.authPassword)
                     _state.value = _state.value.copy(isAuthLoading = false, authError = null)
                 },
                 onFailure = { err ->
@@ -161,6 +182,7 @@ class StoreScreenModel(
     }
 
     fun signOut() {
+        CredentialStorage.clearCustomer()
         screenModelScope.launch { firebase.signOut() }
     }
 
